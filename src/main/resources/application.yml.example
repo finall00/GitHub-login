@@ -5,5 +5,5 @@ spring:
         registration:
           github:
             clientId: <ID>
-            clientSecret: <Chave>
+            clientSecret: <SECRET>
             scope: read:user, read:org, repo
