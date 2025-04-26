@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Home</title>
+    <meta name="viewport" content="width=device-width"/>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.1.0/css/bootstrap.min.css"/>
+    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/webjars/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+<div class="container py-5">
+    <h1 class="mb-4">Welcome to the Home Page!</h1>
+
+    <div class="mb-3">
+        <p><strong>User:</strong> <span th:text="${user}"></span></p>
+        <p><strong>Profile Link:</strong> <a th:href="${profileLink}" target="_blank">Access Profile</a></p>
+    </div>
+
+    <h2>GitHub Details</h2>
+
+    <div id="githubInfo">
+        <div id="reposAccordion" class="accordion"></div>
+    </div>
+
+    <a href="/logout" class="btn btn-danger mt-4">Logout</a>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $.get("/github/info")
+            .done(function(data) {
+                console.log(data);
+
+                if (data.user) {
+                    $("#userInfo").html(`
+                    <img src="${data.user.avatar_url}" width="50" height="50" class="rounded-circle me-2">
+                    <strong>${data.user.login}</strong>
+                `);
+                }
+
+                if (data.repoDetails) {
+                    let reposAccordion = '';
+
+                    Object.keys(data.repoDetails).forEach(function(repoName, index) {
+                        const repo = data.repoDetails[repoName];
+
+                        let pullsHtml = '<ul>';
+                        if (repo.pulls && repo.pulls.length > 0) {
+                            repo.pulls.forEach(function(pr) {
+                                pullsHtml += `<li><a href="${pr.html_url}" target="_blank">${pr.title}</a> (by ${pr.user.login})</li>`;
+                            });
+                        } else {
+                            pullsHtml += '<li>No Pull Requests</li>';
+                        }
+                        pullsHtml += '</ul>';
+
+                        let commitsHtml = '<ul>';
+                        if (repo.commits && repo.commits.length > 0) {
+                            repo.commits.slice(0, 5).forEach(function(commit) {
+                                commitsHtml += `<li><strong>${commit.commit.message}</strong> by ${commit.commit.author.name}</li>`;
+                            });
+                        } else {
+                            commitsHtml += '<li>No Commits</li>';
+                        }
+                        commitsHtml += '</ul>';
+
+                        reposAccordion += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${index}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                                ${repoName}
+                            </button>
+                        </h2>
+                        <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#reposAccordion">
+                            <div class="accordion-body">
+                                <h5>Pull Requests:</h5>
+                                ${pullsHtml}
+                                <h5 class="mt-3">Commits:</h5>
+                                ${commitsHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                    });
+
+                    $("#reposAccordion").html(reposAccordion);
+                }
+            })
+            .fail(function(xhr, status, error) {
+                console.error("Erro ao buscar /github/info:", status, error);
+                console.error(xhr.responseText);
+            });
+    });
+</script>
+
+</body>
+</html>

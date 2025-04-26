@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Error</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.1.0/css/bootstrap.min.css"/>
+</head>
+<body class="bg-light d-flex align-items-center" style="height: 100vh;">
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4">
+                <h1 class="text-danger text-center mb-4">Error</h1>
+                <p class="text-center">Sorry, but something went wrong.</p>
+                <p class="text-center">
+                    <strong>Error Details:</strong>
+                    <span th:text="${errorMessage}">Error details will appear here.</span>
+                </p>
+                <div class="text-center mt-4">
+                    <a href="/login" class="btn btn-primary">Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
