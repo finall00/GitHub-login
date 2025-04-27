@@ -1,98 +1,98 @@
-<!doctype html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>Home</title>
-    <meta name="viewport" content="width=device-width"/>
-    <link rel="stylesheet" href="/webjars/bootstrap/5.1.0/css/bootstrap.min.css"/>
-    <script src="/webjars/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/webjars/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+    <meta charset="UTF-8">
+    <title>GitHub OAuth App</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+        button { margin: 5px; padding: 10px; font-size: 14px; cursor: pointer; }
+        pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        #output { margin-top: 20px; }
+    </style>
 </head>
-
 <body>
-<div class="container py-5">
-    <h1 class="mb-4">Welcome to the Home Page!</h1>
 
-    <div class="mb-3">
-        <p><strong>User:</strong> <span th:text="${user}"></span></p>
-        <p><strong>Profile Link:</strong> <a th:href="${profileLink}" target="_blank">Access Profile</a></p>
-    </div>
+<h1>GitHub OAuth App</h1>
 
-    <h2>GitHub Details</h2>
-
-    <div id="githubInfo">
-        <div id="reposAccordion" class="accordion"></div>
-    </div>
-
-    <a href="/logout" class="btn btn-danger mt-4">Logout</a>
+<div>
+    <button onclick="fetchUser()">Carregar Usuário</button>
+    <button onclick="fetchRepos()">Listar Repositórios</button>
+    <button onclick="fetchOrgs()">Listar Organizações</button>
+    <button onclick="fetchAllIssues()">Listar Issues</button>
 </div>
 
+<div id="repoActions" style="margin-top: 20px;">
+    <input type="text" id="repoOwner" placeholder="Dono do Repositório">
+    <input type="text" id="repoName" placeholder="Nome do Repositório">
+    <button onclick="fetchPulls()">Listar Pull Requests</button>
+    <button onclick="fetchCommits()">Listar Commits</button>
+    <button onclick="fetchRepoIssue()">Listar Issues</button>
+</div>
+
+<div id="output"></div>
+
 <script>
-    $(document).ready(function() {
-        $.get("/github/info")
-            .done(function(data) {
-                console.log(data);
+    async function callApi(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Erro: ' + response.status);
+            }
+            const data = await response.json();
+            document.getElementById('output').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+            document.getElementById('output').innerHTML = `<pre style="color: red;">${error}</pre>`;
+        }
+    }
 
-                if (data.user) {
-                    $("#userInfo").html(`
-                    <img src="${data.user.avatar_url}" width="50" height="50" class="rounded-circle me-2">
-                    <strong>${data.user.login}</strong>
-                `);
-                }
+    function fetchUser() {
+        callApi('/github/user');
+    }
 
-                if (data.repoDetails) {
-                    let reposAccordion = '';
+    function fetchRepos() {
+        callApi('/github/repos');
+    }
 
-                    Object.keys(data.repoDetails).forEach(function(repoName, index) {
-                        const repo = data.repoDetails[repoName];
+    function fetchOrgs() {
+        callApi('/github/orgs');
+    }
 
-                        let pullsHtml = '<ul>';
-                        if (repo.pulls && repo.pulls.length > 0) {
-                            repo.pulls.forEach(function(pr) {
-                                pullsHtml += `<li><a href="${pr.html_url}" target="_blank">${pr.title}</a> (by ${pr.user.login})</li>`;
-                            });
-                        } else {
-                            pullsHtml += '<li>No Pull Requests</li>';
-                        }
-                        pullsHtml += '</ul>';
+    function fetchPulls() {
+        const owner = document.getElementById('repoOwner').value;
+        const repo = document.getElementById('repoName').value;
+        if (owner && repo) {
+            callApi(`/github/repos/${owner}/${repo}/pulls`);
+        } else {
+            alert("Preencha o dono e o nome do repositório.");
+        }
+    }
 
-                        let commitsHtml = '<ul>';
-                        if (repo.commits && repo.commits.length > 0) {
-                            repo.commits.slice(0, 5).forEach(function(commit) {
-                                commitsHtml += `<li><strong>${commit.commit.message}</strong> by ${commit.commit.author.name}</li>`;
-                            });
-                        } else {
-                            commitsHtml += '<li>No Commits</li>';
-                        }
-                        commitsHtml += '</ul>';
+    function fetchCommits() {
+        const owner = document.getElementById('repoOwner').value;
+        const repo = document.getElementById('repoName').value;
+        if (owner && repo) {
+            callApi(`/github/repos/${owner}/${repo}/commits`);
+        } else {
+            alert("Preencha o dono e o nome do repositório.");
+        }
+    }
 
-                        reposAccordion += `
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading${index}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
-                                ${repoName}
-                            </button>
-                        </h2>
-                        <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#reposAccordion">
-                            <div class="accordion-body">
-                                <h5>Pull Requests:</h5>
-                                ${pullsHtml}
-                                <h5 class="mt-3">Commits:</h5>
-                                ${commitsHtml}
-                            </div>
-                        </div>
-                    </div>`;
-                    });
 
-                    $("#reposAccordion").html(reposAccordion);
-                }
-            })
-            .fail(function(xhr, status, error) {
-                console.error("Erro ao buscar /github/info:", status, error);
-                console.error(xhr.responseText);
-            });
-    });
+    function  fetchAllIssues() {
+        callApi('/github/issues/all');
+    }
+
+    function fetchRepoIssue() {
+        const owner = document.getElementById('repoOwner').value;
+        const repo = document.getElementById('repoName').value;
+        if (owner && repo) {
+            callApi(`/github/repos/${owner}/${repo}/issues`);
+        } else {
+            alert("Preencha o dono e o nome do repositório.")
+        }
+    }
+
 </script>
 
 </body>

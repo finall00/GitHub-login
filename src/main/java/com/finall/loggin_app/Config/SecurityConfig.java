@@ -1,4 +1,4 @@
-package com.finall.loggin_app;
+package com.finall.loggin_app.Config;
 
 
 import org.springframework.context.annotation.Bean;

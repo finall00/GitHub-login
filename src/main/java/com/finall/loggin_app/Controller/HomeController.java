@@ -1,4 +1,4 @@
-package com.finall.loggin_app;
+package com.finall.loggin_app.Controller;
 
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,9 +14,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @org.springframework.stereotype.Controller
-public class Controller {
+public class HomeController {
     @GetMapping("/home")
     public  String home(Model model, @AuthenticationPrincipal OAuth2User oAuth2User) {
+        if(oAuth2User == null) {
+            return "redirect:/login";
+        }
         System.out.println(oAuth2User.getAttributes());
         model.addAttribute("user", oAuth2User.getAttribute("login"));
         model.addAttribute("profileLink", oAuth2User.getAttribute("html_url"));
